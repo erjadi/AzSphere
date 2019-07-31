@@ -1,4 +1,5 @@
-﻿#include <stdbool.h>
+﻿// Standard & Board Imports
+#include <stdbool.h>
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
@@ -9,6 +10,7 @@
 #include <applibs/gpio.h>
 #include "mt3620_rdb.h"
 #include "epoll_timerfd_utilities.h"
+#include "leds.h"
 
 // Azure IoT SDK
 #include <azureiot/iothub_client_core_common.h>
@@ -17,27 +19,22 @@
 #include <azureiot/iothubtransportmqtt.h>
 #include <azureiot/iothub.h>
 #include <azureiot/azure_sphere_provisioning.h>
-
 #include "parson.h" // used to parse Device Twin messages.
 
 #define SCOPEID_LENGTH 20
 
 // Termination state
 static volatile sig_atomic_t terminationRequired = false;
-static char scopeId[SCOPEID_LENGTH]; // ScopeId for the Azure IoT Central application, set in
-									 // app_manifest.json, CmdArgs
-
+static char scopeId[SCOPEID_LENGTH]; 
 static IOTHUB_DEVICE_CLIENT_LL_HANDLE iothubClientHandle = NULL;
 static const int keepalivePeriodSeconds = 20;
 static bool iothubAuthenticated = false;
 static void SendMessageCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void* context);
-static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char* payload,
-	size_t payloadSize, void* userContextCallback);
+static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char* payload,size_t payloadSize, void* userContextCallback);
 static void TwinReportBoolState(const char* propertyName, bool propertyValue);
 static void ReportStatusCallback(int result, void* context);
 static const char* GetReasonString(IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason);
-static const char* getAzureSphereProvisioningResultString(
-	AZURE_SPHERE_PROV_RETURN_VALUE provisioningResult);
+static const char* getAzureSphereProvisioningResultString(AZURE_SPHERE_PROV_RETURN_VALUE provisioningResult);
 static void SendTelemetry(const unsigned char* key, const unsigned char* value);
 static void SetupAzureClient(void);
 
@@ -61,16 +58,10 @@ static EventData azureEventData = { .eventHandler = &AzureTimerEventHandler };
 
 static int azureIoTPollPeriodSeconds = -1;
 
-static const int SAMPLE_BUTTON_1 = 12;
-static const int SAMPLE_BUTTON_2 = 13;
 static int LeftButtonGpioFd = -1;
 static int RightButtonGpioFd = -1;
 static int buttonPollTimerFd = -1;
-static int leds[4];
-static int ledsindex = 0;
 
-static int redleds[4];
-static int redledsindex = 0;
 static int score = 0;
 
 // Button state variables
@@ -83,26 +74,10 @@ static GPIO_Value_Type rightButtonState = GPIO_Value_High;
 static void SendMessage()
 {
 	char buffer[1];
-	sprintf(buffer, "%i", ledsindex);
+	sprintf(buffer, "%i", indexBlue);
 	SendTelemetry("blue", buffer);
 }
 
-/// <summary>
-///     Update status leds on dev board.
-/// </summary>
-static void UpdateLeds(void)
-{
-	for (int i = 0; i < 4; i++) {
-		if (i != ledsindex)
-			GPIO_SetValue(leds[i], GPIO_Value_High);
-		else {
-			GPIO_SetValue(leds[i], GPIO_Value_Low);
-			Log_Debug("Turned on LED %d\r\n", i);
-		}
-	}
-
-	SendMessage();
-}
 
 /// <summary>
 ///     Handle button timer event: if the button is pressed, change the LED blink rate.
@@ -131,8 +106,8 @@ static void ButtonTimerEventHandler(EventData* eventData)
 			//if (SetTimerFdToPeriod(blinkingLedTimerFd, &blinkIntervals[blinkIntervalIndex]) != 0) {
 			//	terminationRequired = true;
 			//}
-			ledsindex--;
-			if (ledsindex < 0) ledsindex += 4;
+			indexBlue--;
+			if (indexBlue < 0) indexBlue += 4;
 			UpdateLeds();
 		}
 		leftButtonState = newButtonState;
@@ -154,8 +129,8 @@ static void ButtonTimerEventHandler(EventData* eventData)
 			//if (SetTimerFdToPeriod(blinkingLedTimerFd, &blinkIntervals[blinkIntervalIndex]) != 0) {
 			//	terminationRequired = true;
 			//}
-			ledsindex++;
-			ledsindex %= 4;
+			indexBlue++;
+			indexBlue %= 4;
 			UpdateLeds();
 		}
 		rightButtonState = newButtonState;
@@ -176,18 +151,9 @@ int main(int argc, char* argv[])
     // It is NOT recommended to use this as a starting point for developing apps; instead use
     // the extensible samples here: https://github.com/Azure/azure-sphere-samples
 
-	leds[0] = GPIO_OpenAsOutput(10, GPIO_OutputMode_PushPull, GPIO_Value_High);
-	leds[1] = GPIO_OpenAsOutput(17, GPIO_OutputMode_PushPull, GPIO_Value_High);
-	leds[2] = GPIO_OpenAsOutput(20, GPIO_OutputMode_PushPull, GPIO_Value_High);
-	leds[3] = GPIO_OpenAsOutput(23, GPIO_OutputMode_PushPull, GPIO_Value_High);
-
-	redleds[0] = GPIO_OpenAsOutput(8, GPIO_OutputMode_PushPull, GPIO_Value_High);
-	redleds[1] = GPIO_OpenAsOutput(15, GPIO_OutputMode_PushPull, GPIO_Value_High);
-	redleds[2] = GPIO_OpenAsOutput(18, GPIO_OutputMode_PushPull, GPIO_Value_High);
-	redleds[3] = GPIO_OpenAsOutput(21, GPIO_OutputMode_PushPull, GPIO_Value_High);
-
 	Log_Debug("IoT Hub/Central Application starting.\n");
 
+	InitLeds();
 	InitPeripheralsAndHandlers();
 
 	if (argc == 2) {
@@ -216,16 +182,16 @@ int main(int argc, char* argv[])
 	UpdateLeds();
 
 	while (!terminationRequired) {
-		redledsindex++;
-		redledsindex %= 400;
+		indexRed++;
+		indexRed %= 400;
 		//if ((redledsindex % 100) == 0) {
 		//	IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
 		//}
 		for (int i = 0; i < 4; i++) {
-			if (i != redledsindex / 100)
-				GPIO_SetValue(redleds[i], GPIO_Value_High);
+			if (i != indexRed / 100)
+				GPIO_SetValue(ledsRed[i], GPIO_Value_High);
 			else {
-				GPIO_SetValue(redleds[i], GPIO_Value_Low);
+				GPIO_SetValue(ledsRed[i], GPIO_Value_High); // Should be low
 			}
 		}
 
@@ -252,6 +218,8 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
 /// </summary>
 static void AzureTimerEventHandler(EventData* eventData)
 {
+	SetStatusLed(iothubAuthenticated);
+
 	if (ConsumeTimerFdEvent(azureTimerFd) != 0) {
 		//terminationRequired = true;
 		return;
@@ -336,19 +304,21 @@ static int InitPeripheralsAndHandlers(void)
 		return -1;
 	}
 
+	SetStatusLed(false);
+
 	azureIoTPollPeriodSeconds = AzureIoTDefaultPollPeriodSeconds;
 	struct timespec azureTelemetryPeriod = { azureIoTPollPeriodSeconds, 0 };
 	azureTimerFd =
 		CreateTimerFdAndAddToEpoll(epollFd, &azureTelemetryPeriod, &azureEventData, EPOLLIN);
 
 	// Open button GPIO as input, and set up a timer to poll it
-	LeftButtonGpioFd = GPIO_OpenAsInput(SAMPLE_BUTTON_1);
+	LeftButtonGpioFd = GPIO_OpenAsInput(MT3620_RDB_BUTTON_A);
 	if (LeftButtonGpioFd < 0) {
 		Log_Debug("ERROR: Could not open button GPIO: %s (%d).\n", strerror(errno), errno);
 		return -1;
 	}
 
-	RightButtonGpioFd = GPIO_OpenAsInput(SAMPLE_BUTTON_2);
+	RightButtonGpioFd = GPIO_OpenAsInput(MT3620_RDB_BUTTON_B);
 	if (RightButtonGpioFd < 0) {
 		Log_Debug("ERROR: Could not open button GPIO: %s (%d).\n", strerror(errno), errno);
 		return -1;
