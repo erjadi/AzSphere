@@ -21,8 +21,10 @@
 #include <azureiot/azure_sphere_provisioning.h>
 #include "parson.h" // used to parse Device Twin messages.
 
-#define SCOPEID_LENGTH 20
+static int indexBlue = 0;
+static int indexRed = 0;
 
+#define SCOPEID_LENGTH 20
 // Termination state
 static volatile sig_atomic_t terminationRequired = false;
 static char scopeId[SCOPEID_LENGTH]; 
@@ -98,22 +100,16 @@ static void ButtonTimerEventHandler(EventData* eventData)
 		return;
 	}
 
-	// If the button has just been pressed, change the LED blink interval
-	// The button has GPIO_Value_Low when pressed and GPIO_Value_High when released
 	if (newButtonState != leftButtonState) {
 		if (newButtonState == GPIO_Value_Low) {
-			//blinkIntervalIndex = (blinkIntervalIndex + 1) % numBlinkIntervals;
-			//if (SetTimerFdToPeriod(blinkingLedTimerFd, &blinkIntervals[blinkIntervalIndex]) != 0) {
-			//	terminationRequired = true;
-			//}
 			indexBlue--;
 			if (indexBlue < 0) indexBlue += 4;
-			UpdateLeds();
+			UpdateBlueLed(indexBlue);
 		}
 		leftButtonState = newButtonState;
 	}
 
-	// Check for a button press
+	// Check for a button press (Right button)
 	result = GPIO_GetValue(RightButtonGpioFd, &newButtonState);
 	if (result != 0) {
 		Log_Debug("ERROR: Could not read button GPIO: %s (%d).\n", strerror(errno), errno);
@@ -121,17 +117,12 @@ static void ButtonTimerEventHandler(EventData* eventData)
 		return;
 	}
 
-	// If the button has just been pressed, change the LED blink interval
-	// The button has GPIO_Value_Low when pressed and GPIO_Value_High when released
 	if (newButtonState != rightButtonState) {
 		if (newButtonState == GPIO_Value_Low) {
-			//blinkIntervalIndex = (blinkIntervalIndex + 1) % numBlinkIntervals;
-			//if (SetTimerFdToPeriod(blinkingLedTimerFd, &blinkIntervals[blinkIntervalIndex]) != 0) {
-			//	terminationRequired = true;
-			//}
+
 			indexBlue++;
 			indexBlue %= 4;
-			UpdateLeds();
+			UpdateBlueLed(indexBlue);
 		}
 		rightButtonState = newButtonState;
 	}
@@ -165,39 +156,25 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-    //int fd = GPIO_OpenAsOutput(MT3620_RDB_LED1_BLUE, GPIO_OutputMode_PushPull, GPIO_Value_High);
-    //if (fd < 0) {
-    //    Log_Debug(
-    //        "Error opening GPIO: %s (%d). Check that app_manifest.json includes the GPIO used.\n",
-    //        strerror(errno), errno);
-    //    return -1;
-    //}
+	UpdateLeds(-1,1,0); // Clear all status leds
 
-	//if (InitPeripheralsAndHandlers() != 0) {
-	//	Log_Debug("Could not initialize timers");
-	//}
-
-	//SetupAzureClient();
-
-	UpdateLeds();
+	int cycle = 0;
 
 	while (!terminationRequired) {
-		indexRed++;
-		indexRed %= 400;
-		//if ((redledsindex % 100) == 0) {
-		//	IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
-		//}
-		for (int i = 0; i < 4; i++) {
-			if (i != indexRed / 100)
-				GPIO_SetValue(ledsRed[i], GPIO_Value_High);
-			else {
-				GPIO_SetValue(ledsRed[i], GPIO_Value_High); // Should be low
-			}
+
+		cycle++;
+		cycle %= 400;
+
+		if (cycle == 0) {
+			indexRed = (indexRed + 1) % 4;
+			UpdateRedLed(indexRed);
 		}
 
 		if (WaitForEventAndCallHandler(epollFd) != 0) {
 			terminationRequired = true;
 		}
+
+		IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
 	}
 }
 
@@ -221,7 +198,7 @@ static void AzureTimerEventHandler(EventData* eventData)
 	SetStatusLed(iothubAuthenticated);
 
 	if (ConsumeTimerFdEvent(azureTimerFd) != 0) {
-		//terminationRequired = true;
+		terminationRequired = true;
 		return;
 	}
 
@@ -254,9 +231,6 @@ static void SetupAzureClient(void)
 
 	if (provResult.result != AZURE_SPHERE_PROV_RESULT_OK) {
 
-		// If we fail to connect, reduce the polling frequency, starting at
-		// AzureIoTMinReconnectPeriodSeconds and with a backoff up to
-		// AzureIoTMaxReconnectPeriodSeconds
 		if (azureIoTPollPeriodSeconds == AzureIoTDefaultPollPeriodSeconds) {
 			azureIoTPollPeriodSeconds = AzureIoTMinReconnectPeriodSeconds;
 		}
