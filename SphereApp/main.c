@@ -24,16 +24,14 @@
 
 static int indexBlue = 0;
 static int indexRed = 0;
-
+static char scopeId[SCOPEID_LENGTH];
 static volatile sig_atomic_t terminationRequired = false;
 
 // Initialization/Cleanup
 static int InitPeripheralsAndHandlers(void);
+//static void ClosePeripheralsAndHandlers(void);
 static void AzureTimerEventHandler(EventData* eventData);
 static EventData azureEventData = { .eventHandler = &AzureTimerEventHandler };
-
-//static void ClosePeripheralsAndHandlers(void);
-
 
 static int azureTimerFd = -1;
 static int epollFd = -1;
@@ -43,22 +41,9 @@ static int LeftButtonGpioFd = -1;
 static int RightButtonGpioFd = -1;
 static int buttonPollTimerFd = -1;
 
-static int score = 0;
-
 // Button state variables
 static GPIO_Value_Type leftButtonState = GPIO_Value_High;
 static GPIO_Value_Type rightButtonState = GPIO_Value_High;
-
-/// <summary>
-///     Send Status to IoTHub
-/// </summary>
-static void SendMessage()
-{
-	char buffer[1];
-	sprintf(buffer, "%i", indexBlue);
-	SendTelemetry("blue", buffer);
-}
-
 
 /// <summary>
 ///     Handle button timer event: if the button is pressed, change the LED blink rate.
@@ -121,7 +106,7 @@ int main(int argc, char* argv[])
     // It is NOT recommended to use this as a starting point for developing apps; instead use
     // the extensible samples here: https://github.com/Azure/azure-sphere-samples
 
-	Log_Debug("IoT Hub/Central Application starting.\n");
+	Log_Debug("AzSphere Application starting.\n");
 
 	InitLeds();
 	InitPeripheralsAndHandlers();
@@ -153,6 +138,30 @@ int main(int argc, char* argv[])
 			terminationRequired = true;
 		}
 
+		IoTHubDeviceClient_LL_DoWork(getIoTHubClientHandle());
+	}
+}
+
+
+/// <summary>
+/// Azure timer event:  Check connection status and send telemetry
+/// </summary>
+static void AzureTimerEventHandler(EventData* eventData)
+{
+	SetStatusLed(isIoTHubAuthenticated());
+
+	if (ConsumeTimerFdEvent(azureTimerFd) != 0) {
+		terminationRequired = true;
+		return;
+	}
+
+	//bool isNetworkReady = false;
+	if (!isIoTHubAuthenticated()) {
+		SetupAzureClient(azureTimerFd, scopeId);
+	}
+
+	if (isIoTHubAuthenticated()) {
+		//SendSimulatedTemperature();
 		IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
 	}
 }
@@ -197,3 +206,4 @@ static int InitPeripheralsAndHandlers(void)
 
 	return 0;
 }
+

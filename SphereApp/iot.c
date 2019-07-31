@@ -6,21 +6,21 @@
 #include <applibs/log.h>
 #include "leds.h"
 
-extern int azureTimerFd;
 extern volatile sig_atomic_t terminationRequired;
+bool iothubAuthenticated = false;
 
 /// <summary>
 ///     Sets up the Azure IoT Hub connection (creates the iothubClientHandle)
 ///     When the SAS Token for a device expires the connection needs to be recreated
 ///     which is why this is not simply a one time call.
 /// </summary>
-static void SetupAzureClient(void)
+void SetupAzureClient(int timerFd, char _scopeId[SCOPEID_LENGTH])
 {
 	if (iothubClientHandle != NULL)
 		IoTHubDeviceClient_LL_Destroy(iothubClientHandle);
 
 	AZURE_SPHERE_PROV_RETURN_VALUE provResult =
-		IoTHubDeviceClient_LL_CreateWithAzureSphereDeviceAuthProvisioning(scopeId, 10000,
+		IoTHubDeviceClient_LL_CreateWithAzureSphereDeviceAuthProvisioning(_scopeId, 10000,
 			&iothubClientHandle);
 	Log_Debug("IoTHubDeviceClient_LL_CreateWithAzureSphereDeviceAuthProvisioning returned '%s'.\n",
 		getAzureSphereProvisioningResultString(provResult));
@@ -38,7 +38,7 @@ static void SetupAzureClient(void)
 		}
 
 		struct timespec azureTelemetryPeriod = { azureIoTPollPeriodSeconds, 0 };
-		SetTimerFdToPeriod(azureTimerFd, &azureTelemetryPeriod);
+		SetTimerFdToPeriod(timerFd, &azureTelemetryPeriod);
 
 		Log_Debug("ERROR: failure to create IoTHub Handle - will retry in %i seconds.\n",
 			azureIoTPollPeriodSeconds);
@@ -59,8 +59,7 @@ static void SetupAzureClient(void)
 	}
 
 	IoTHubDeviceClient_LL_SetDeviceTwinCallback(iothubClientHandle, TwinCallback, NULL);
-	int i = IoTHubDeviceClient_LL_SetConnectionStatusCallback(iothubClientHandle,
-		HubConnectionStatusCallback, NULL);
+	IoTHubDeviceClient_LL_SetConnectionStatusCallback(iothubClientHandle, HubConnectionStatusCallback, NULL);
 }
 
 /// <summary>
@@ -274,7 +273,7 @@ void SendSimulatedTemperature(void)
 ///     Sets the IoT Hub authentication state for the app
 ///     The SAS Token expires which will set the authentication state
 /// </summary>
-static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
+void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
 	IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason,
 	void* userContextCallback)
 {
@@ -282,25 +281,12 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
 	Log_Debug("IoT Hub Authenticated: %s\n", GetReasonString(reason));
 }
 
-/// <summary>
-/// Azure timer event:  Check connection status and send telemetry
-/// </summary>
-static void AzureTimerEventHandler(EventData* eventData)
+bool isIoTHubAuthenticated(void)
 {
-	SetStatusLed(iothubAuthenticated);
+	return iothubAuthenticated;
+}
 
-	if (ConsumeTimerFdEvent(azureTimerFd) != 0) {
-		terminationRequired = true;
-		return;
-	}
-
-	//bool isNetworkReady = false;
-	if (!iothubAuthenticated) {
-		SetupAzureClient();
-	}
-
-	if (iothubAuthenticated) {
-		//SendSimulatedTemperature();
-		IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
-	}
+IOTHUB_DEVICE_CLIENT_LL_HANDLE getIoTHubClientHandle(void)
+{
+	return iothubClientHandle;
 }
