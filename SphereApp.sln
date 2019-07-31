@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29123.88
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SphereApp", "SphereApp\SphereApp.vcxproj", "{47A8E322-59BB-47C9-8438-45F6A68B9B9B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Release|ARM = Release|ARM
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{47A8E322-59BB-47C9-8438-45F6A68B9B9B}.Debug|ARM.ActiveCfg = Debug|ARM
+		{47A8E322-59BB-47C9-8438-45F6A68B9B9B}.Debug|ARM.Build.0 = Debug|ARM
+		{47A8E322-59BB-47C9-8438-45F6A68B9B9B}.Release|ARM.ActiveCfg = Release|ARM
+		{47A8E322-59BB-47C9-8438-45F6A68B9B9B}.Release|ARM.Build.0 = Release|ARM
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8D0D86B0-227D-4258-81E5-8FCE07597E2F}
+	EndGlobalSection
+EndGlobal

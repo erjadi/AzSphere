@@ -1,0 +1,32 @@
+{
+  "SchemaVersion": 1,
+  "Name" : "SphereApp",
+  "ComponentId" : "9223930c-e955-4542-a896-e8173da2a56c",
+  "EntryPoint": "/bin/app",
+  "CmdArgs": [ "0ne0006E718" ],
+  "Capabilities": {
+    "AllowedConnections": [
+      "edjiot.azure-devices.net",
+      "global.azure-devices-provisioning.net",
+      "51.144.118.31"
+    ],
+    "Gpio": [
+      "$MT3620_RDB_LED1_BLUE",
+      "$MT3620_RDB_LED2_BLUE",
+      "$MT3620_RDB_LED3_BLUE",
+      "$MT3620_RDB_LED4_BLUE",
+      "$MT3620_RDB_LED1_RED",
+      "$MT3620_RDB_LED2_RED",
+      "$MT3620_RDB_LED3_RED",
+      "$MT3620_RDB_LED4_RED",
+      "$MT3620_RDB_BUTTON_A",
+      "$MT3620_RDB_BUTTON_B",
+      "$MT3620_RDB_STATUS_LED_RED",
+      "$MT3620_RDB_STATUS_LED_GREEN"
+    ],
+    "DeviceAuthentication": "d343c263-4aa3-4558-adbb-d3fc34631800",
+    "Uart": [],
+    "WifiConfig": false
+  },
+  "ApplicationType":"Default"
+}
