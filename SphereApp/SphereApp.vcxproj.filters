@@ -28,6 +28,9 @@
     <ClCompile Include="leds.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="iot.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mt3620_rdb.h">
@@ -43,6 +46,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="leds.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="iot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,0 +1,36 @@
+#pragma once
+// Azure IoT SDK
+#include <azureiot/iothub_client_core_common.h>
+#include <azureiot/iothub_device_client_ll.h>
+#include <azureiot/iothub_client_options.h>
+#include <azureiot/iothubtransportmqtt.h>
+#include <azureiot/iothub.h>
+#include <azureiot/azure_sphere_provisioning.h>
+#include "stdbool.h"
+#include "epoll_timerfd_utilities.h"
+#include "parson.h" // used to parse Device Twin messages.
+
+#define SCOPEID_LENGTH 20
+
+// Azure IoT poll periods
+
+static const int AzureIoTDefaultPollPeriodSeconds = 5;
+static const int AzureIoTMinReconnectPeriodSeconds = 60;
+static const int AzureIoTMaxReconnectPeriodSeconds = 10 * 60;
+static int azureIoTPollPeriodSeconds = -1;
+
+static IOTHUB_DEVICE_CLIENT_LL_HANDLE iothubClientHandle = NULL;
+static char scopeId[SCOPEID_LENGTH];
+static const int keepalivePeriodSeconds = 20;
+static bool iothubAuthenticated = false;
+
+static void SetupAzureClient(void);
+static void SendMessageCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void* context);
+static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char* payload, size_t payloadSize, void* userContextCallback);
+static void TwinReportBoolState(const char* propertyName, bool propertyValue);
+static void ReportStatusCallback(int result, void* context);
+static const char* GetReasonString(IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason);
+static const char* getAzureSphereProvisioningResultString(AZURE_SPHERE_PROV_RETURN_VALUE provisioningResult);
+static void SendTelemetry(const unsigned char* key, const unsigned char* value);
+static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason, void* userContextCallback);
+

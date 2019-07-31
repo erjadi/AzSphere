@@ -41,6 +41,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="epoll_timerfd_utilities.c" />
+    <ClCompile Include="iot.c" />
     <ClCompile Include="leds.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="parson.c" />
@@ -48,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="epoll_timerfd_utilities.h" />
+    <ClInclude Include="iot.h" />
     <ClInclude Include="leds.h" />
     <ClInclude Include="mt3620.h" />
     <ClInclude Include="mt3620_rdb.h" />
