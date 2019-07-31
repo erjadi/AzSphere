@@ -11,6 +11,7 @@
 #include "parson.h" // used to parse Device Twin messages.
 
 #define SCOPEID_LENGTH 20
+#define LOGLINE_LENGTH 1024
 
 // Azure IoT poll periods
 
@@ -34,3 +35,4 @@ static const char* getAzureSphereProvisioningResultString(AZURE_SPHERE_PROV_RETU
 static void SendTelemetry(const unsigned char* key, const unsigned char* value);
 void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason, void* userContextCallback);
 IOTHUB_DEVICE_CLIENT_LL_HANDLE getIoTHubClientHandle(void);
+static IOTHUBMESSAGE_DISPOSITION_RESULT ReceiveMessageCallback(IOTHUB_MESSAGE_HANDLE message, void* user_context);

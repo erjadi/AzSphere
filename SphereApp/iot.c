@@ -60,6 +60,7 @@ void SetupAzureClient(int timerFd, char _scopeId[SCOPEID_LENGTH])
 
 	IoTHubDeviceClient_LL_SetDeviceTwinCallback(iothubClientHandle, TwinCallback, NULL);
 	IoTHubDeviceClient_LL_SetConnectionStatusCallback(iothubClientHandle, HubConnectionStatusCallback, NULL);
+	IoTHubDeviceClient_LL_SetMessageCallback(iothubClientHandle, ReceiveMessageCallback, NULL);
 }
 
 /// <summary>
@@ -289,4 +290,67 @@ bool isIoTHubAuthenticated(void)
 IOTHUB_DEVICE_CLIENT_LL_HANDLE getIoTHubClientHandle(void)
 {
 	return iothubClientHandle;
+}
+
+static IOTHUBMESSAGE_DISPOSITION_RESULT ReceiveMessageCallback(IOTHUB_MESSAGE_HANDLE message, void* user_context)
+{
+	(void)user_context;
+	const char* messageId;
+	const char* correlationId;
+
+	// Message properties
+	if ((messageId = IoTHubMessage_GetMessageId(message)) == NULL)
+	{
+		messageId = "<unavailable>";
+	}
+
+	if ((correlationId = IoTHubMessage_GetCorrelationId(message)) == NULL)
+	{
+		correlationId = "<unavailable>";
+	}
+
+	IOTHUBMESSAGE_CONTENT_TYPE content_type = IoTHubMessage_GetContentType(message);
+	if (content_type == IOTHUBMESSAGE_BYTEARRAY)
+	{
+		const unsigned char* buff_msg;
+		size_t buff_len;
+
+		if (IoTHubMessage_GetByteArray(message, &buff_msg, &buff_len) != IOTHUB_MESSAGE_OK)
+		{
+			Log_Debug("Failure retrieving byte array message\r\n");	
+		}
+		else
+		{
+			char logline[LOGLINE_LENGTH];
+			sprintf(logline, "Received Binary message\r\nMessage ID: %s\r\n Correlation ID: %s\r\n Data: <<<%.*s>>> & Size=%d\r\n", messageId, correlationId, (int)buff_len, buff_msg, (int)buff_len);
+			Log_Debug(logline);
+			Blink();
+		}
+	}
+	else
+	{
+		const char* string_msg = IoTHubMessage_GetString(message);
+		if (string_msg == NULL)
+		{
+			(void)printf("Failure retrieving byte array message\r\n");
+		}
+		else
+		{
+			char logline[LOGLINE_LENGTH];
+			sprintf(logline, "Received String Message\r\nMessage ID: %s\r\n Correlation ID: %s\r\n Data: <<<%s>>>\r\n", messageId, correlationId, string_msg);
+			Log_Debug(logline);
+		}
+	}
+	const char* property_value = "property_value";
+	const char* property_key = IoTHubMessage_GetProperty(message, property_value);
+	if (property_key != NULL)
+	{
+		Log_Debug("\r\nMessage Properties:\r\n");
+		char logline[LOGLINE_LENGTH];
+		sprintf(logline, "\tKey: %s Value: %s\r\n", property_value, property_key);
+		Log_Debug(logline);
+	}
+	//g_message_recv_count++;
+
+	return IOTHUBMESSAGE_ACCEPTED;
 }

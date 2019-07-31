@@ -86,3 +86,36 @@ void UpdateBlueLed(int index)
 	}
 }
 
+void SaveLedState(GPIO_Value backup[12])
+{
+	for (int i = 0; i < 4; i++)	{
+		GPIO_GetValue(ledsRed[i], &backup[i * 3]);
+		GPIO_GetValue(ledsGreen[i], &backup[i * 3 + 1]);
+		GPIO_GetValue(ledsBlue[i], &backup[i * 3 + 2]);
+	}
+}
+
+void RestoreLedState(GPIO_Value backup[12])
+{
+	for (int i = 0; i < 4; i++) {
+		GPIO_SetValue(ledsRed[i], backup[i * 3]);
+		GPIO_SetValue(ledsGreen[i], backup[i * 3 + 1]);
+		GPIO_SetValue(ledsBlue[i], backup[i * 3 + 2]);
+	}
+}
+
+void Blink(void)
+{
+	GPIO_Value backup[12];
+	SaveLedState(backup);
+	
+	for (int j = 0; j < 1000; j++)
+		for (int i = 0; i < 4; i++) {
+			GPIO_SetValue(ledsRed[i], GPIO_Value_Low);
+			GPIO_SetValue(ledsGreen[i], GPIO_Value_Low);
+			GPIO_SetValue(ledsBlue[i], GPIO_Value_Low);
+		}
+
+	RestoreLedState(backup);
+}
+
