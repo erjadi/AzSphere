@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
 		lcd_command(LCD_CLEAR);
 		lcd_light(true);
 		lcd_gotolc(1, 1);
-		lcd_print("SphereApp v0.1.1");
+		lcd_print("SphereApp v0.1.2");
 	}
 
 	// I2C Scratch
