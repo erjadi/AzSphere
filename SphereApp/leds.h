@@ -9,8 +9,9 @@ void UpdateRedLed(int index);
 void UpdateGreenLed(int index);
 void UpdateBlueLed(int index);
 
-void SaveLedState(GPIO_Value* backup);
-void RestoreLedState(GPIO_Value* backup);
+void SaveLedState(GPIO_Value backup[12]);
+void RestoreLedState(GPIO_Value backup[12]);
 void Blink(void);
+void AllLedsOff(void);
 
 

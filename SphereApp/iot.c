@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <applibs/log.h>
 #include "leds.h"
+#include "main.h"
 
 extern volatile sig_atomic_t terminationRequired;
 bool iothubAuthenticated = false;
@@ -312,7 +313,7 @@ static IOTHUBMESSAGE_DISPOSITION_RESULT ReceiveMessageCallback(IOTHUB_MESSAGE_HA
 	IOTHUBMESSAGE_CONTENT_TYPE content_type = IoTHubMessage_GetContentType(message);
 	if (content_type == IOTHUBMESSAGE_BYTEARRAY)
 	{
-		const unsigned char* buff_msg;
+		unsigned char* buff_msg;
 		size_t buff_len;
 
 		if (IoTHubMessage_GetByteArray(message, &buff_msg, &buff_len) != IOTHUB_MESSAGE_OK)
@@ -321,10 +322,14 @@ static IOTHUBMESSAGE_DISPOSITION_RESULT ReceiveMessageCallback(IOTHUB_MESSAGE_HA
 		}
 		else
 		{
+			buff_msg[buff_len + 1] = 0;
 			char logline[LOGLINE_LENGTH];
 			sprintf(logline, "Received Binary message\r\nMessage ID: %s\r\n Correlation ID: %s\r\n Data: <<<%.*s>>> & Size=%d\r\n", messageId, correlationId, (int)buff_len, buff_msg, (int)buff_len);
 			Log_Debug(logline);
 			Blink();
+			char messagestring[buff_len];
+			strcpy(messagestring, buff_msg);
+			processMessage(messagestring, buff_len);
 		}
 	}
 	else

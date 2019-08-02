@@ -1,4 +1,5 @@
 ﻿// Standard & Board Imports
+#define I2C_STRUCTS_VERSION 1
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
@@ -6,28 +7,30 @@
 #include <stdlib.h>
 #include <time.h>
 #include <signal.h>
+#include <applibs/rtc.h>
 #include <applibs/log.h>
 #include <applibs/gpio.h>
 #include "mt3620_rdb.h"
 #include "epoll_timerfd_utilities.h"
 #include "leds.h"
+#include <applibs/i2c.h>
+#include "lcd.h"
 
 // Azure IoT SDK
 #include "iot.h"
-//#include <azureiot/iothub_client_core_common.h>
-//#include <azureiot/iothub_device_client_ll.h>
-//#include <azureiot/iothub_client_options.h>
-//#include <azureiot/iothubtransportmqtt.h>
-//#include <azureiot/iothub.h>
-//#include <azureiot/azure_sphere_provisioning.h>
-//#include "parson.h" // used to parse Device Twin messages.
 
+// LCD Stuff
+static int i2cFd = -1;
+static bool lcd_enabled = false;
+
+// Globals
 static int indexBlue = 0;
 static int indexRed = 0;
 static char scopeId[SCOPEID_LENGTH];
 static volatile sig_atomic_t terminationRequired = false;
 
 // Initialization/Cleanup
+static bool firstConnected = true;
 static int InitPeripheralsAndHandlers(void);
 //static void ClosePeripheralsAndHandlers(void);
 static void AzureTimerEventHandler(EventData* eventData);
@@ -36,7 +39,6 @@ static EventData azureEventData = { .eventHandler = &AzureTimerEventHandler };
 static int azureTimerFd = -1;
 static int epollFd = -1;
 
-
 static int LeftButtonGpioFd = -1;
 static int RightButtonGpioFd = -1;
 static int buttonPollTimerFd = -1;
@@ -44,6 +46,21 @@ static int buttonPollTimerFd = -1;
 // Button state variables
 static GPIO_Value_Type leftButtonState = GPIO_Value_High;
 static GPIO_Value_Type rightButtonState = GPIO_Value_High;
+
+// I2C Stuff
+void LiquidCrystal_I2C_expanderWrite(uint8_t _data);
+void LiquidCrystal_I2C_pulseEnable(uint8_t _data);
+void LiquidCrystal_I2C_write4bits(uint8_t value);
+void LiquidCrystal_I2C_send(uint8_t value, uint8_t mode);
+
+/// <summary>
+///     Signal handler for termination requests. This handler must be async-signal-safe.
+/// </summary>
+static void TerminationHandler(int signalNumber)
+{
+	// Don't use Log_Debug here, as it is not guaranteed to be async-signal-safe.
+	terminationRequired = true;
+}
 
 /// <summary>
 ///     Handle button timer event: if the button is pressed, change the LED blink rate.
@@ -67,6 +84,7 @@ static void ButtonTimerEventHandler(EventData* eventData)
 	if (newButtonState != leftButtonState) {
 		if (newButtonState == GPIO_Value_Low) {
 			indexBlue--;
+			TerminationHandler(0);
 			if (indexBlue < 0) indexBlue += 4;
 			UpdateBlueLed(indexBlue);
 		}
@@ -94,7 +112,6 @@ static void ButtonTimerEventHandler(EventData* eventData)
 
 static EventData buttonEventData = { .eventHandler = &ButtonTimerEventHandler };
 
-
 int main(int argc, char* argv[])
 {
     // This minimal Azure Sphere app repeatedly toggles GPIO 9, which is the green channel of RGB
@@ -106,6 +123,20 @@ int main(int argc, char* argv[])
     // It is NOT recommended to use this as a starting point for developing apps; instead use
     // the extensible samples here: https://github.com/Azure/azure-sphere-samples
 
+	clock_systohc();
+
+	lcd_enabled = lcd_init(MT3620_RDB_HEADER4_ISU2_I2C);
+
+	if (lcd_enabled) {
+		lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
+		lcd_command(LCD_CLEAR);
+		lcd_light(true);
+		lcd_gotolc(1, 1);
+		lcd_print("Starting up...");
+	}
+
+	// I2C Scratch
+
 	Log_Debug("AzSphere Application starting.\n");
 
 	InitLeds();
@@ -114,6 +145,12 @@ int main(int argc, char* argv[])
 	if (argc == 2) {
 		Log_Debug("Setting Azure Scope ID %s\n", argv[1]);
 		strncpy(scopeId, argv[1], SCOPEID_LENGTH);
+		if (lcd_enabled) {
+			lcd_gotolc(2, 1);
+			lcd_print("ScopeId");
+			lcd_gotolc(3, 1);
+			lcd_print(scopeId);
+		}
 	}
 	else {
 		Log_Debug("ScopeId needs to be set in the app_manifest CmdArgs\n");
@@ -138,8 +175,10 @@ int main(int argc, char* argv[])
 			terminationRequired = true;
 		}
 
-		IoTHubDeviceClient_LL_DoWork(getIoTHubClientHandle());
+		//if ((cycle % 25) == 0) IoTHubDeviceClient_LL_DoWork(getIoTHubClientHandle());
 	}
+
+	AllLedsOff();
 }
 
 
@@ -161,8 +200,22 @@ static void AzureTimerEventHandler(EventData* eventData)
 	}
 
 	if (isIoTHubAuthenticated()) {
-		//SendSimulatedTemperature();
-		IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
+		IoTHubDeviceClient_LL_DoWork(getIoTHubClientHandle());
+
+		if (firstConnected) {
+			firstConnected = false;
+			lcd_command(LCD_CLEAR);
+		}
+		else {
+			lcd_gotolc(1, 1);
+			time_t rawtime;
+			struct tm* timeinfo;
+			time(&rawtime);
+			timeinfo = localtime(&rawtime);
+			char timebuf[18];
+			sprintf(timebuf, "Connected %02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+			lcd_print(timebuf);
+		}
 	}
 }
 
@@ -172,6 +225,11 @@ static void AzureTimerEventHandler(EventData* eventData)
 /// <returns>0 on success, or -1 on failure</returns>
 static int InitPeripheralsAndHandlers(void)
 {
+	struct sigaction action;
+	memset(&action, 0, sizeof(struct sigaction));
+	action.sa_handler = TerminationHandler;
+	sigaction(SIGTERM, &action, NULL);
+
 	epollFd = CreateEpollFd();
 	if (epollFd < 0) {
 		return -1;
@@ -205,5 +263,24 @@ static int InitPeripheralsAndHandlers(void)
 	}
 
 	return 0;
+}
+
+void processMessage(unsigned char* message, int length) {
+	if (strcmp(message, "reset_LCD") == 0)
+	{
+		lcd_enabled = lcd_init(MT3620_RDB_HEADER4_ISU2_I2C);
+
+		if (lcd_enabled) {
+			lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
+			lcd_command(LCD_CLEAR);
+			lcd_light(true);
+			lcd_gotolc(1, 1);
+		}
+	} else if (lcd_enabled)	{
+		lcd_gotolc(3, 1);
+		lcd_print("                    ");
+		lcd_gotolc(3, 1);
+		lcd_printlen(message, length);
+	}
 }
 

@@ -15,7 +15,7 @@
 
 // Azure IoT poll periods
 
-static const int AzureIoTDefaultPollPeriodSeconds = 5;
+static const int AzureIoTDefaultPollPeriodSeconds = 1;
 static const int AzureIoTMinReconnectPeriodSeconds = 60;
 static const int AzureIoTMaxReconnectPeriodSeconds = 10 * 60;
 static int azureIoTPollPeriodSeconds = -1;

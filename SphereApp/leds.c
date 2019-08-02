@@ -119,3 +119,10 @@ void Blink(void)
 	RestoreLedState(backup);
 }
 
+void AllLedsOff(void)
+{
+	UpdateLeds(-1, -1, -1);
+	GPIO_SetValue(statusLedRed, GPIO_Value_High);
+	GPIO_SetValue(statusLedGreen, GPIO_Value_High);
+}
+

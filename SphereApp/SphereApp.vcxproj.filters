@@ -31,6 +31,9 @@
     <ClCompile Include="iot.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="lcd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mt3620_rdb.h">
@@ -49,6 +52,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="iot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lcd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
