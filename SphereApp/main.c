@@ -132,9 +132,7 @@ int main(int argc, char* argv[])
 		lcd_command(LCD_CLEAR);
 		lcd_light(true);
 		lcd_gotolc(1, 1);
-		lcd_print("Starting up...");
-		lcd_gotolc(2, 1);
-		lcd_print("SphereApp v0.1");
+		lcd_print("SphereApp v0.11");
 	}
 
 	// I2C Scratch
@@ -278,7 +276,11 @@ void processMessage(unsigned char* message, int length) {
 			lcd_light(true);
 			lcd_gotolc(1, 1);
 		}
-	} else if (lcd_enabled)	{
+	}
+	else if (strcmp(message, "reboot") == 0) {
+		terminationRequired = true;
+	} 
+	else if (lcd_enabled) {
 		lcd_gotolc(3, 1);
 		lcd_print("                    ");
 		lcd_gotolc(3, 1);
