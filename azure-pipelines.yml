@@ -34,6 +34,6 @@ steps:
 
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    PathtoPublish: '$(Build.Repository.LocalPath)\SphereApp\bin\ARM\Release'
     ArtifactName: 'drop'
     publishLocation: 'Container'
