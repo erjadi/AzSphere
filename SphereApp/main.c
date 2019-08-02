@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
 		lcd_command(LCD_CLEAR);
 		lcd_light(true);
 		lcd_gotolc(1, 1);
-		lcd_print("SphereApp v0.11");
+		lcd_print("SphereApp v0.1.1");
 	}
 
 	// I2C Scratch
@@ -150,6 +150,8 @@ int main(int argc, char* argv[])
 			lcd_print("ScopeId");
 			lcd_gotolc(4, 1);
 			lcd_print(scopeId);
+			lcd_gotolc(2, 1);
+			lcd_print("Connecting...");
 		}
 	}
 	else {
