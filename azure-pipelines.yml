@@ -31,3 +31,9 @@ steps:
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.Repository.LocalPath)\SphereApp\bin\ARM\Release\SphereApp.imagepackage'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
