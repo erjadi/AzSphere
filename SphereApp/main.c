@@ -16,6 +16,7 @@
 #include <applibs/i2c.h>
 #include "lcd.h"
 
+
 // Azure IoT SDK
 #include "iot.h"
 
@@ -84,7 +85,6 @@ static void ButtonTimerEventHandler(EventData* eventData)
 	if (newButtonState != leftButtonState) {
 		if (newButtonState == GPIO_Value_Low) {
 			indexBlue--;
-			TerminationHandler(0);
 			if (indexBlue < 0) indexBlue += 4;
 			UpdateBlueLed(indexBlue);
 		}
@@ -268,7 +268,10 @@ static int InitPeripheralsAndHandlers(void)
 }
 
 void processMessage(unsigned char* message, int length) {
-	if (strcmp(message, "reset_LCD") == 0)
+	unsigned char fixedstring[length];
+	strcpy(fixedstring, message);
+	fixedstring[length] = 0;
+	if (strcmp(fixedstring, "reset_LCD") == 0)
 	{
 		lcd_enabled = lcd_init(MT3620_RDB_HEADER4_ISU2_I2C);
 
@@ -279,9 +282,12 @@ void processMessage(unsigned char* message, int length) {
 			lcd_gotolc(1, 1);
 		}
 	}
-	else if (strcmp(message, "reboot") == 0) {
+	else if (strcmp(fixedstring, "terminate") == 0) {
 		terminationRequired = true;
-	} 
+	}
+	else if (strcmp(fixedstring, "reboot") == 0) {
+		TerminationHandler(0);
+	}
 	else if (lcd_enabled) {
 		lcd_gotolc(3, 1);
 		lcd_print("                    ");
