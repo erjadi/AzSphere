@@ -40,6 +40,7 @@
 #include <applibs/i2c.h>
 #include <applibs/log.h>
 #include <string.h>
+#include "iot.h"
 
 // global variable f�r light control
 
