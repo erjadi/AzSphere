@@ -304,14 +304,36 @@ void processMessage(unsigned char* message, int length) {
 	else if (strcmp(fixedstring, "reboot") == 0) {
 		TerminationHandler(0);
 	}
-	else if (strcmp(fixedstring, "hardreset") == 0) {
-		resetCounter = 1000;
-	}
+	//else if (strcmp(fixedstring, "hardreset") == 0) {
+	//	resetCounter = 1000;
+	//}
 	else if (lcd_enabled) {
 		lcd_gotolc(3, 1);
 		lcd_print("                    ");
 		lcd_gotolc(3, 1);
 		lcd_printlen(message, length);
 	}
+}
+
+int processFunction(unsigned char* name, unsigned char* payload, unsigned char** response, size_t* resp_size) {
+
+	const char* RESPONSE_STRING = "{ \"Response\": \"Unknown method name.\" }";
+	*resp_size = strlen(RESPONSE_STRING);
+	*response = malloc(*resp_size);
+	memcpy(*response, RESPONSE_STRING, *resp_size);
+
+	if (strcmp(name, "hardreset") == 0) {
+		const char* RESPONSE_STRING = "{ \"Response\": \"Hard reset successfully scheduled.\" }";
+		Log_Debug("Method call received: Hard reset scheduled.");
+		lcd_gotolc(3, 1);
+		const char* message = "Hard reset scheduled";
+		lcd_printlen(message, 20);
+		*resp_size = strlen(RESPONSE_STRING);
+		*response = malloc(*resp_size);
+		memcpy(*response, RESPONSE_STRING, *resp_size);
+		resetCounter = 10000;
+		return 200;
+	}
+	return 501;
 }
 

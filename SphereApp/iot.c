@@ -62,6 +62,7 @@ void SetupAzureClient(int timerFd, char _scopeId[SCOPEID_LENGTH])
 	IoTHubDeviceClient_LL_SetDeviceTwinCallback(iothubClientHandle, TwinCallback, NULL);
 	IoTHubDeviceClient_LL_SetConnectionStatusCallback(iothubClientHandle, HubConnectionStatusCallback, NULL);
 	IoTHubDeviceClient_LL_SetMessageCallback(iothubClientHandle, ReceiveMessageCallback, NULL);
+	IoTHubDeviceClient_LL_SetDeviceMethodCallback(iothubClientHandle, DeviceMethodCallback, NULL);
 }
 
 /// <summary>
@@ -92,25 +93,15 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 		goto cleanup;
 	}
 
-	//JSON_Object* rootObject = json_value_get_object(rootProperties);
-	//JSON_Object* desiredProperties = json_object_dotget_object(rootObject, "desired");
-	//if (desiredProperties == NULL) {
-	//	desiredProperties = rootObject;
-	//}
-
-	//// Handle the Device Twin Desired Properties here.
-	//JSON_Object* LEDState = json_object_dotget_object(desiredProperties, "StatusLED");
-	//if (LEDState != NULL) {
-	//	statusLedOn = (bool)json_object_get_boolean(LEDState, "value");
-	//	GPIO_SetValue(deviceTwinStatusLedGpioFd,
-	//		(statusLedOn == true ? GPIO_Value_Low : GPIO_Value_High));
-	//	TwinReportBoolState("StatusLED", statusLedOn);
-	//}
-
 cleanup:
 	// Release the allocated memory.
 	json_value_free(rootProperties);
 	free(nullTerminatedJsonString);
+}
+
+static int DeviceMethodCallback(const char* method_name, const unsigned char* payload, size_t size, unsigned char** response, size_t* resp_size, void* userContextCallback) {
+	int result = processFunction(method_name, payload, response, resp_size);
+	return result;
 }
 
 /// <summary>
@@ -249,26 +240,6 @@ static void TwinReportBoolState(const char* propertyName, bool propertyValue)
 static void ReportStatusCallback(int result, void* context)
 {
 	Log_Debug("INFO: Device Twin reported properties update result: HTTP status code %d\n", result);
-}
-
-/// <summary>
-///     Generates a simulated Temperature and sends to IoT Hub.
-/// </summary>
-void SendSimulatedTemperature(void)
-{
-	static float temperature = 30.0;
-	float deltaTemp = (float)(rand() % 20) / 20.0f;
-	if (rand() % 2 == 0) {
-		temperature += deltaTemp;
-	}
-	else {
-		temperature -= deltaTemp;
-	}
-
-	char tempBuffer[20];
-	int len = snprintf(tempBuffer, 20, "%3.2f", temperature);
-	if (len > 0)
-		SendTelemetry("Temperature", tempBuffer);
 }
 
 /// <summary>
