@@ -22,6 +22,7 @@
 
 // GPIO59 for Reset
 static int resetFd = -1;
+static int resetCounter = -1;
 
 // LCD Stuff
 static int i2cFd = -1;
@@ -57,6 +58,10 @@ void LiquidCrystal_I2C_pulseEnable(uint8_t _data);
 void LiquidCrystal_I2C_write4bits(uint8_t value);
 void LiquidCrystal_I2C_send(uint8_t value, uint8_t mode);
 
+
+static void hardreset(void) {
+	int result = GPIO_SetValue(resetFd, GPIO_Value_Low);
+}
 /// <summary>
 ///     Signal handler for termination requests. This handler must be async-signal-safe.
 /// </summary>
@@ -167,6 +172,12 @@ int main(int argc, char* argv[])
 	int cycle = 0;
 
 	while (!terminationRequired) {
+
+		if (resetCounter > 0) {
+			resetCounter--;
+		}
+
+		if (resetCounter == 0) hardreset();
 
 		cycle++;
 		cycle %= 400;
@@ -294,7 +305,7 @@ void processMessage(unsigned char* message, int length) {
 		TerminationHandler(0);
 	}
 	else if (strcmp(fixedstring, "hardreset") == 0) {
-		int result = GPIO_SetValue(resetFd, GPIO_Value_Low);
+		resetCounter = 10000;
 	}
 	else if (lcd_enabled) {
 		lcd_gotolc(3, 1);
