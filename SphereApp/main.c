@@ -305,7 +305,7 @@ void processMessage(unsigned char* message, int length) {
 		TerminationHandler(0);
 	}
 	else if (strcmp(fixedstring, "hardreset") == 0) {
-		resetCounter = 10000;
+		resetCounter = 1000;
 	}
 	else if (lcd_enabled) {
 		lcd_gotolc(3, 1);
