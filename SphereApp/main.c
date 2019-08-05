@@ -20,6 +20,9 @@
 // Azure IoT SDK
 #include "iot.h"
 
+// GPIO59 for Reset
+static int resetFd = -1;
+
 // LCD Stuff
 static int i2cFd = -1;
 static bool lcd_enabled = false;
@@ -232,6 +235,8 @@ static int InitPeripheralsAndHandlers(void)
 	action.sa_handler = TerminationHandler;
 	sigaction(SIGTERM, &action, NULL);
 
+	resetFd = GPIO_OpenAsOutput(MT3620_RDB_HEADER1_PIN3_GPIO, GPIO_OutputMode_OpenDrain, GPIO_Value_High);
+
 	epollFd = CreateEpollFd();
 	if (epollFd < 0) {
 		return -1;
@@ -287,6 +292,9 @@ void processMessage(unsigned char* message, int length) {
 	}
 	else if (strcmp(fixedstring, "reboot") == 0) {
 		TerminationHandler(0);
+	}
+	else if (strcmp(fixedstring, "hardreset") == 0) {
+		int result = GPIO_SetValue(resetFd, GPIO_Value_Low);
 	}
 	else if (lcd_enabled) {
 		lcd_gotolc(3, 1);
