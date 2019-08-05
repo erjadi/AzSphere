@@ -317,6 +317,7 @@ void processMessage(unsigned char* message, int length) {
 
 int processFunction(unsigned char* name, unsigned char* payload, unsigned char** response, size_t* resp_size) {
 
+	BlinkRed();
 	const char* RESPONSE_STRING = "{ \"Response\": \"Unknown method name.\" }";
 	*resp_size = strlen(RESPONSE_STRING);
 	*response = malloc(*resp_size);
