@@ -36,9 +36,9 @@ steps:
       Write-Host "$(Build.BuildId)"
       Write-Host "$(Build.SourcesDirectory)"
       
-      (Get-Content ($Build.SourcesDirectory)\SphereApp\main.c) | 
-      Foreach-Object {$_ -replace "#VERSION_NUMBER", "($Build.BuildId)"} | 
-      Set-Content ($Build.SourcesDirectory)\SphereApp\main.c
+      (Get-Content $(Build.SourcesDirectory)\SphereApp\main.c) | 
+      Foreach-Object {$_ -replace "#VERSION_NUMBER", "$(Build.BuildId)"} | 
+      Set-Content $(Build.SourcesDirectory)\SphereApp\main.c
 
 - task: VSBuild@1
   inputs:
