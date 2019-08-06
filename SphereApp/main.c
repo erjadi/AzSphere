@@ -180,6 +180,7 @@ int main(int argc, char* argv[])
 	UpdateLeds(-1,-1,0); // Clear all status leds
 
 	int cycle = 0;
+	int resetlcdcycle = 0;
 
 	// Start main loop
 
@@ -192,7 +193,13 @@ int main(int argc, char* argv[])
 		if (resetCounter == 0) hardreset();
 
 		cycle++;
+		resetlcdcycle++;
+
 		cycle %= 400;
+		resetlcdcycle %= 2000;
+
+		if (resetlcdcycle == 0)
+			resetLCD();
 
 		if (cycle == 0) {
 			indexRed = (indexRed + 1) % 4;
@@ -301,22 +308,26 @@ static int InitPeripheralsAndHandlers(void)
 	return 0;
 }
 
+void resetLCD(void) {
+	lcd_enabled = lcd_init(MT3620_RDB_HEADER4_ISU2_I2C);
+
+	if (lcd_enabled) {
+		lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
+		lcd_command(LCD_CLEAR);
+		lcd_light(true);
+		lcd_gotolc(2, 1);
+		lcd_print("Build ID #VERSION_NUMBER");
+		lcd_gotolc(1, 1);
+	}
+}
+
 void processMessage(unsigned char* message, int length) {
 	unsigned char fixedstring[length];
 	strcpy(fixedstring, message);
 	fixedstring[length] = 0;
 	if (strcmp(fixedstring, "reset_LCD") == 0)
 	{
-		lcd_enabled = lcd_init(MT3620_RDB_HEADER4_ISU2_I2C);
-
-		if (lcd_enabled) {
-			lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
-			lcd_command(LCD_CLEAR);
-			lcd_light(true);
-			lcd_gotolc(2, 1);
-			lcd_print("Build ID #VERSION_NUMBER");
-			lcd_gotolc(1, 1);
-		}
+		resetLCD();
 	}
 	else if (strcmp(fixedstring, "terminate") == 0) {
 		terminationRequired = true;
