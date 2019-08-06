@@ -134,6 +134,21 @@ void BlinkRed(void)
 	RestoreLedState(backup);
 }
 
+void BlinkGreen(void)
+{
+	GPIO_Value backup[12];
+	SaveLedState(backup);
+
+	for (int j = 0; j < 1000; j++)
+		for (int i = 0; i < 4; i++) {
+			GPIO_SetValue(ledsRed[i], GPIO_Value_High);
+			GPIO_SetValue(ledsGreen[i], GPIO_Value_Low);
+			GPIO_SetValue(ledsBlue[i], GPIO_Value_High);
+		}
+
+	RestoreLedState(backup);
+}
+
 void AllLedsOff(void)
 {
 	UpdateLeds(-1, -1, -1);

@@ -71,6 +71,12 @@ static void TerminationHandler(int signalNumber)
 	terminationRequired = true;
 }
 
+void setBlueLed(int index) {
+	UpdateBlueLed(index);
+	TwinReportIntState("blueled", index);
+	indexBlue = index;
+}
+
 /// <summary>
 ///     Handle button timer event: if the button is pressed, change the LED blink rate.
 /// </summary>
@@ -94,7 +100,7 @@ static void ButtonTimerEventHandler(EventData* eventData)
 		if (newButtonState == GPIO_Value_Low) {
 			indexBlue--;
 			if (indexBlue < 0) indexBlue += 4;
-			UpdateBlueLed(indexBlue);
+			setBlueLed(indexBlue);
 		}
 		leftButtonState = newButtonState;
 	}
@@ -112,7 +118,7 @@ static void ButtonTimerEventHandler(EventData* eventData)
 
 			indexBlue++;
 			indexBlue %= 4;
-			UpdateBlueLed(indexBlue);
+			setBlueLed(indexBlue);
 		}
 		rightButtonState = newButtonState;
 	}
@@ -130,6 +136,8 @@ int main(int argc, char* argv[])
     //
     // It is NOT recommended to use this as a starting point for developing apps; instead use
     // the extensible samples here: https://github.com/Azure/azure-sphere-samples
+
+	// Init Device / Display if available
 
 	clock_systohc();
 
@@ -149,6 +157,8 @@ int main(int argc, char* argv[])
 
 	InitLeds();
 	InitPeripheralsAndHandlers();
+
+	// Log in to IoT Hub
 
 	if (argc == 2) {
 		Log_Debug("Setting Azure Scope ID %s\n", argv[1]);
@@ -170,6 +180,8 @@ int main(int argc, char* argv[])
 	UpdateLeds(-1,-1,0); // Clear all status leds
 
 	int cycle = 0;
+
+	// Start main loop
 
 	while (!terminationRequired) {
 
@@ -218,9 +230,13 @@ static void AzureTimerEventHandler(EventData* eventData)
 	if (isIoTHubAuthenticated()) {
 		IoTHubDeviceClient_LL_DoWork(getIoTHubClientHandle());
 
-		if (firstConnected) {
+		if (firstConnected) { // First connection to IoT Hub
 			firstConnected = false;
 			lcd_command(LCD_CLEAR);
+			lcd_gotolc(2, 1);
+			lcd_print("Build ID #VERSION_NUMBER");
+			TwinReportStringState("appversion", "#VERSION_NUMBER"); // Report build number
+			TwinReportIntState("blueled", indexBlue);
 		}
 		else {
 			lcd_gotolc(1, 1);
@@ -295,6 +311,8 @@ void processMessage(unsigned char* message, int length) {
 			lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
 			lcd_command(LCD_CLEAR);
 			lcd_light(true);
+			lcd_gotolc(2, 1);
+			lcd_print("Build ID #VERSION_NUMBER");
 			lcd_gotolc(1, 1);
 		}
 	}
@@ -332,9 +350,25 @@ int processFunction(unsigned char* name, unsigned char* payload, unsigned char**
 		*resp_size = strlen(RESPONSE_STRING);
 		*response = malloc(*resp_size);
 		memcpy(*response, RESPONSE_STRING, *resp_size);
-		resetCounter = 10000;
+		resetCounter = 5000;
 		return 200;
 	}
 	return 501;
 }
 
+void versionHandler(unsigned char* version) {
+	if (version != NULL)
+		if (strcmp(version, "#VERSION_NUMBER") != 0) {
+			Log_Debug("Upgrade request to build %d",version);
+			lcd_gotolc(3, 1);
+			char* message = "Upgrading to build -";
+			lcd_printlen(message, 20);
+			lcd_gotolc(4, 1);
+			lcd_printlen(version, 3);
+			resetCounter = 5000;
+		}
+}
+
+unsigned char* getVersion() {
+	return "#VERSION_NUMBER";
+}
