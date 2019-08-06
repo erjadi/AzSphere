@@ -33,8 +33,8 @@ steps:
       Write-Host "($buildid)"
       Write-Host "($srcdir)"
 
-      Write-Host "($build.BuildId)"
-      Write-Host "($Build.SourcesDirectory)"
+      Write-Host "$(Build.BuildId)"
+      Write-Host "$(Build.SourcesDirectory)"
       
       (Get-Content ($Build.SourcesDirectory)\SphereApp\main.c) | 
       Foreach-Object {$_ -replace "#VERSION_NUMBER", "($Build.BuildId)"} | 
