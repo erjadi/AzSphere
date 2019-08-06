@@ -209,10 +209,10 @@ int main(int argc, char* argv[])
 		resetlcdcycle++;
 
 		cycle %= 400;
-		resetlcdcycle %= 2000;
+		resetlcdcycle %= 20000;
 
 		if (resetlcdcycle == 0)
-			resetLCD();
+			//resetLCD();
 
 		if (cycle == 0) {
 			indexRed = (indexRed + 1) % 4;
