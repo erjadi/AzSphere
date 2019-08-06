@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
 		lcd_command(LCD_CLEAR);
 		lcd_light(true);
 		lcd_gotolc(1, 1);
-		lcd_print("SphereApp #VERSION_NUMBER");
+		lcd_print("SphereApp build #VERSION_NUMBER");
 	}
 
 	// I2C Scratch
@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
 		if (resetCounter == 0) hardreset();
 
 		cycle++;
-		cycle %= 100;
+		cycle %= 400;
 
 		if (cycle == 0) {
 			indexRed = (indexRed + 1) % 4;
