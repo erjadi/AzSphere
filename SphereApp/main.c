@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
 		if (resetCounter == 0) hardreset();
 
 		cycle++;
-		cycle %= 400;
+		cycle %= 200;
 
 		if (cycle == 0) {
 			indexRed = (indexRed + 1) % 4;
