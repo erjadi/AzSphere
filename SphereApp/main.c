@@ -84,9 +84,16 @@ void resetLCD(void) {
 		lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
 		lcd_command(LCD_CLEAR);
 		lcd_light(true);
-		//lcd_gotolc(2, 1);
-		//lcd_print("Build ID #VERSION_NUMBER");
-		//lcd_gotolc(1, 1);
+		lcd_gotolc(1, 1);
+		time_t rawtime;
+		struct tm* timeinfo;
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		char timebuf[18];
+		sprintf(timebuf, "Connected %02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+		lcd_print(timebuf);
+		lcd_gotolc(2, 1);
+		lcd_print("Build ID #VERSION_NUMBER");
 	}
 }
 
