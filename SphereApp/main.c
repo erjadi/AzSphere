@@ -84,9 +84,9 @@ void resetLCD(void) {
 		lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
 		lcd_command(LCD_CLEAR);
 		lcd_light(true);
-		lcd_gotolc(2, 1);
-		lcd_print("Build ID #VERSION_NUMBER");
-		lcd_gotolc(1, 1);
+		//lcd_gotolc(2, 1);
+		//lcd_print("Build ID #VERSION_NUMBER");
+		//lcd_gotolc(1, 1);
 	}
 }
 
