@@ -21,6 +21,18 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Write your PowerShell commands here.
+      
+      Write-Host "($Build.BuildId)"
+      Write-Host "($Build.SourcesDirectory"
+      
+      (Get-Content ($Build.SourcesDirectory)\SphereApp\main.c) | 
+      Foreach-Object {$_ -replace "#VERSION_NUMBER", "($Build.BuildId)"} | 
+      Set-Content ($Build.SourcesDirectory)\SphereApp\main.c
 
 - task: VSBuild@1
   inputs:
