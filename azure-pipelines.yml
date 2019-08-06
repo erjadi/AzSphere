@@ -28,10 +28,13 @@ steps:
       # Write your PowerShell commands here.
       
       Write-Host "##vso[task.setvariable variable=buildid;]$Build.BuildId"
-      Write-Host "##vso[task.setvariable variable=srcdir;]$Build.SourcesDirectoryd"
+      Write-Host "##vso[task.setvariable variable=srcdir;]$Build.SourcesDirectory"
 
-      Write-Host "($env:buildid)"
-      Write-Host "($env:srcdir)"
+      Write-Host "($buildid)"
+      Write-Host "($srcdir)"
+
+      Write-Host "($build.BuildId)"
+      Write-Host "($Build.SourcesDirectory)"
       
       (Get-Content ($Build.SourcesDirectory)\SphereApp\main.c) | 
       Foreach-Object {$_ -replace "#VERSION_NUMBER", "($Build.BuildId)"} | 
