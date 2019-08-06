@@ -77,6 +77,19 @@ void setBlueLed(int index) {
 	indexBlue = index;
 }
 
+void resetLCD(void) {
+	lcd_enabled = lcd_init(MT3620_RDB_HEADER4_ISU2_I2C);
+
+	if (lcd_enabled) {
+		lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
+		lcd_command(LCD_CLEAR);
+		lcd_light(true);
+		lcd_gotolc(2, 1);
+		lcd_print("Build ID #VERSION_NUMBER");
+		lcd_gotolc(1, 1);
+	}
+}
+
 /// <summary>
 ///     Handle button timer event: if the button is pressed, change the LED blink rate.
 /// </summary>
@@ -306,19 +319,6 @@ static int InitPeripheralsAndHandlers(void)
 	}
 
 	return 0;
-}
-
-void resetLCD(void) {
-	lcd_enabled = lcd_init(MT3620_RDB_HEADER4_ISU2_I2C);
-
-	if (lcd_enabled) {
-		lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
-		lcd_command(LCD_CLEAR);
-		lcd_light(true);
-		lcd_gotolc(2, 1);
-		lcd_print("Build ID #VERSION_NUMBER");
-		lcd_gotolc(1, 1);
-	}
 }
 
 void processMessage(unsigned char* message, int length) {
