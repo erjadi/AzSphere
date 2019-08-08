@@ -61,20 +61,25 @@ bool lcd_init(int ISU) {
 	
 	lcd_light(false);
 
-	_delay_ms(15);		        //-	Wait for more than 15ms after VDD rises to 4.5V
+	_delay_ms(30);		        //-	Wait for more than 15ms after VDD rises to 4.5V
 	lcd_write(CMD_D1 | CMD_D0);	//-	Set interface to 8-bit
-	_delay_ms(5);			    //-	Wait for more than 4.1ms
+	_delay_ms(30);			    //-	Wait for more than 4.1ms
 	lcd_write(CMD_D1 | CMD_D0);	//-	Set interface to 8-bit
-	_delay_ms(0.1);		        //-	Wait for more than 100us	
+	_delay_ms(30);		        //-	Wait for more than 100us	
 	lcd_write(CMD_D1 | CMD_D0);	//-	Set interface to 8-bit
 	lcd_write(CMD_D1);		    //-	Set interface to 4-bit
 
 	//- From now on in 4-bit-Mode
 	lcd_command(LCD_LINE_MODE | LCD_5X7);
+	_delay_ms(10);
 	lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGOFF);
+	_delay_ms(10);
 	lcd_command(LCD_CLEAR);
-	_delay_ms(2);
+	_delay_ms(10);
 	lcd_command(LCD_INCREASE | LCD_DISPLAYSHIFTOFF);
+	_delay_ms(10);
+	lcd_light(true);
+	_delay_ms(10);
 	return true;
 }
 

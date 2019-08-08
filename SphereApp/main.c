@@ -82,7 +82,7 @@ void resetLCD(void) {
 
 	if (lcd_enabled) {
 		lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
-		lcd_command(LCD_CLEAR);
+		//lcd_command(LCD_CLEAR);
 		lcd_light(true);
 		lcd_gotolc(1, 1);
 		time_t rawtime;
@@ -164,9 +164,7 @@ int main(int argc, char* argv[])
 	lcd_enabled = lcd_init(MT3620_RDB_HEADER4_ISU2_I2C);
 
 	if (lcd_enabled) {
-		lcd_command(LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKINGON);
 		lcd_command(LCD_CLEAR);
-		lcd_light(true);
 		lcd_gotolc(1, 1);
 		lcd_print("SphereApp build #VERSION_NUMBER");
 	}
@@ -349,6 +347,8 @@ void processMessage(unsigned char* message, int length) {
 	else if (lcd_enabled) {
 		lcd_gotolc(3, 1);
 		lcd_print("                    ");
+		lcd_gotolc(4, 1);
+		lcd_print("                    ");
 		lcd_gotolc(3, 1);
 		if (length < 20)
 			lcd_printlen(message, length);
@@ -357,7 +357,8 @@ void processMessage(unsigned char* message, int length) {
 			int secondline = length - 20;
 			if (secondline > 20)
 				secondline = 20;
-			lcd_printlen(message[20], secondline);
+			lcd_gotolc(4, 1);
+			lcd_printlen(message + 20, secondline);
 		}
 	}
 }
