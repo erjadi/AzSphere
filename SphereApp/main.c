@@ -10,6 +10,7 @@
 #include <applibs/rtc.h>
 #include <applibs/log.h>
 #include <applibs/gpio.h>
+#include <applibs/networking.h>
 #include "mt3620_rdb.h"
 #include "epoll_timerfd_utilities.h"
 #include "leds.h"
@@ -187,7 +188,7 @@ int main(int argc, char* argv[])
 			lcd_gotolc(4, 1);
 			lcd_print(scopeId);
 			lcd_gotolc(2, 1);
-			lcd_print("Connecting...");
+			lcd_print("Connecting...       ");
 		}
 	}
 	else {
@@ -241,6 +242,7 @@ int main(int argc, char* argv[])
 /// </summary>
 static void AzureTimerEventHandler(EventData* eventData)
 {
+	bool isNetworkReady = false;
 	SetStatusLed(isIoTHubAuthenticated());
 
 	if (ConsumeTimerFdEvent(azureTimerFd) != 0) {
@@ -248,8 +250,18 @@ static void AzureTimerEventHandler(EventData* eventData)
 		return;
 	}
 
-	//bool isNetworkReady = false;
-	if (!isIoTHubAuthenticated()) {
+	Networking_IsNetworkingReady(&isNetworkReady);
+
+	if (!isNetworkReady) {
+		if (lcd_enabled) {
+			lcd_gotolc(2, 1);
+			lcd_print("Waiting for network");
+		}
+		Log_Debug("Waiting for network...");
+	}
+
+	if (!isIoTHubAuthenticated() && isNetworkReady) {
+		Log_Debug("Initializing IoT Hub connection.");
 		SetupAzureClient(azureTimerFd, scopeId);
 	}
 
@@ -386,7 +398,7 @@ int processFunction(unsigned char* name, unsigned char* payload, unsigned char**
 	return 501;
 }
 
-void versionHandler(unsigned char* version) {
+void versionHandler(unsigned char* version) { // OTA Update
 	if (version != NULL)
 		if (strcmp(version, "#VERSION_NUMBER") != 0) {
 			Log_Debug("Upgrade request to build %d",version);
@@ -395,7 +407,7 @@ void versionHandler(unsigned char* version) {
 			lcd_printlen(message, 20);
 			lcd_gotolc(4, 1);
 			lcd_printlen(version, 3);
-			resetCounter = 5000;
+			//resetCounter = 5000;
 		}
 }
 
