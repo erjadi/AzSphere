@@ -350,7 +350,15 @@ void processMessage(unsigned char* message, int length) {
 		lcd_gotolc(3, 1);
 		lcd_print("                    ");
 		lcd_gotolc(3, 1);
-		lcd_printlen(message, length);
+		if (length < 20)
+			lcd_printlen(message, length);
+		else {
+			lcd_printlen(message, 20);
+			int secondline = length - 20;
+			if (secondline > 20)
+				secondline = 20;
+			lcd_printlen(message[20], secondline);
+		}
 	}
 }
 
