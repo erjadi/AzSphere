@@ -43,6 +43,7 @@
     <TargetHardwareDefinition>hardware.json</TargetHardwareDefinition>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="distance.c" />
     <ClCompile Include="epoll_timerfd_utilities.c" />
     <ClCompile Include="iot.c" />
     <ClCompile Include="lcd.c" />
@@ -52,6 +53,7 @@
     <UpToDateCheckInput Include="app_manifest.json" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="distance.h" />
     <ClInclude Include="epoll_timerfd_utilities.h" />
     <ClInclude Include="iot.h" />
     <ClInclude Include="lcd.h" />

@@ -16,6 +16,7 @@
 #include "leds.h"
 #include <applibs/i2c.h>
 #include "lcd.h"
+#include "distance.h"
 
 
 // Azure IoT SDK
@@ -72,6 +73,10 @@ static void TerminationHandler(int signalNumber)
 	terminationRequired = true;
 }
 
+unsigned char* getVersion() {
+	return "#VERSION_NUMBER";
+}
+
 void setBlueLed(int index) {
 	UpdateBlueLed(index);
 	TwinReportIntState("blueled", index);
@@ -94,7 +99,12 @@ void resetLCD(void) {
 		sprintf(timebuf, "Connected %02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
 		lcd_print(timebuf);
 		lcd_gotolc(2, 1);
-		lcd_print("Build ID #VERSION_NUMBER");
+		if (getVersion()[0] == '#')
+		{
+			lcd_print("Debug Build");
+		} else {
+			lcd_print("Build ID #VERSION_NUMBER");
+		}
 	}
 }
 
@@ -160,14 +170,20 @@ int main(int argc, char* argv[])
 
 	// Init Device / Display if available
 
-	clock_systohc();
+	//clock_systohc();
 
 	lcd_enabled = lcd_init(MT3620_RDB_HEADER4_ISU2_I2C);
 
 	if (lcd_enabled) {
 		lcd_command(LCD_CLEAR);
 		lcd_gotolc(1, 1);
-		lcd_print("SphereApp build #VERSION_NUMBER");
+		if (getVersion()[0] == '#')
+		{
+			lcd_print("SphereApp debug mode");
+		}
+		else {
+			lcd_print("SphereApp build #VERSION_NUMBER");
+		}
 	}
 
 	// I2C Scratch
@@ -175,6 +191,7 @@ int main(int argc, char* argv[])
 	Log_Debug("AzSphere Application starting.\n");
 
 	InitLeds();
+	InitDistance();
 	InitPeripheralsAndHandlers();
 
 	// Log in to IoT Hub
@@ -242,6 +259,8 @@ int main(int argc, char* argv[])
 /// </summary>
 static void AzureTimerEventHandler(EventData* eventData)
 {
+	//Log_Debug("Distance %i\n", measureDistance());
+
 	bool isNetworkReady = false;
 	SetStatusLed(isIoTHubAuthenticated());
 
@@ -272,7 +291,11 @@ static void AzureTimerEventHandler(EventData* eventData)
 			firstConnected = false;
 			lcd_command(LCD_CLEAR);
 			lcd_gotolc(2, 1);
-			lcd_print("Build ID #VERSION_NUMBER");
+			if (getVersion()[0] == '#') {
+				lcd_print("Debug Build");
+			} else {
+				lcd_print("Build ID #VERSION_NUMBER");
+			}
 			TwinReportStringState("appversion", "#VERSION_NUMBER"); // Report build number
 			TwinReportIntState("blueled", indexBlue);
 		}
@@ -286,7 +309,12 @@ static void AzureTimerEventHandler(EventData* eventData)
 			sprintf(timebuf, "Connected %02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
 			lcd_print(timebuf);
 			lcd_gotolc(2, 1);
-			lcd_print("Build ID #VERSION_NUMBER");
+			if (getVersion()[0] == '#') {
+				lcd_print("Debug Build");
+			}
+			else {
+				lcd_print("Build ID #VERSION_NUMBER");
+			}
 		}
 	}
 }
@@ -399,18 +427,16 @@ int processFunction(unsigned char* name, unsigned char* payload, unsigned char**
 }
 
 void versionHandler(unsigned char* version) { // OTA Update
-	if (version != NULL)
-		if (strcmp(version, "#VERSION_NUMBER") != 0) {
-			Log_Debug("Upgrade request to build %d",version);
-			lcd_gotolc(3, 1);
-			char* message = "Upgrading to build -";
-			lcd_printlen(message, 20);
-			lcd_gotolc(4, 1);
-			lcd_printlen(version, 3);
-			//resetCounter = 5000;
-		}
+	if (getVersion()[0] != '#') // No OTA upgrades while debugging
+		if (version != NULL)
+			if (strcmp(version, "#VERSION_NUMBER") != 0) {
+				Log_Debug("Upgrade request to build %d",version);
+				lcd_gotolc(3, 1);
+				char* message = "Upgrading to build -";
+				lcd_printlen(message, 20);
+				lcd_gotolc(4, 1);
+				lcd_printlen(version, 3);
+				resetCounter = 5000;
+			}
 }
 
-unsigned char* getVersion() {
-	return "#VERSION_NUMBER";
-}

@@ -11,6 +11,8 @@
       "51.144.118.31"
     ],
     "Gpio": [
+      "$MT3620_RDB_HEADER3_PIN5_GPIO",
+      "$MT3620_RDB_HEADER3_PIN7_GPIO",
       "$MT3620_RDB_HEADER1_PIN3_GPIO",
       "$MT3620_RDB_LED1_RED",
       "$MT3620_RDB_LED2_RED",
