@@ -188,7 +188,7 @@ static void SendMessageCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void* 
 /// </summary>
 /// <param name="key">The telemetry item to update</param>
 /// <param name="value">new telemetry value</param>
-static void SendTelemetry(const unsigned char* key, const unsigned char* value)
+void SendTelemetry(const unsigned char* key, const unsigned char* value)
 {
 	static char eventBuffer[100] = { 0 };
 	static const char* EventMsgTemplate = "{ \"%s\": %s }";
