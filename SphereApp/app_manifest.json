@@ -34,7 +34,7 @@
       "$MT3620_RDB_STATUS_LED_RED",
       "$MT3620_RDB_STATUS_LED_GREEN"
     ],
-    "I2cMaster": [ "$MT3620_RDB_HEADER4_ISU2_I2C" ],
+    "I2cMaster": [ "$MT3620_RDB_HEADER4_ISU2_I2C", "$MT3620_RDB_HEADER4_ISU1_I2C" ],
     "DeviceAuthentication": "d343c263-4aa3-4558-adbb-d3fc34631800",
     "Uart": [],
     "WifiConfig": false

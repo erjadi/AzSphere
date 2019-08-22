@@ -4,3 +4,4 @@ int processFunction(unsigned char* name, unsigned char* payload, unsigned char**
 void setBlueLed(int index);
 void versionHandler(unsigned char* version);
 unsigned char* getVersion();
+void setDistanceflag(bool flag);

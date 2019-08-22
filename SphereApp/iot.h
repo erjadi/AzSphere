@@ -30,6 +30,7 @@ static void SendMessageCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void* 
 static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char* payload, size_t payloadSize, void* userContextCallback);
 void TwinReportStringState(const char* propertyName, const char* propertyValue);
 void TwinReportIntState(const char* propertyName, unsigned int propertyValue);
+void TwinReportBoolState(const char* propertyName, bool propertyValue);
 static void ReportStatusCallback(int result, void* context);
 static int DeviceMethodCallback(const char* method_name, const unsigned char* payload, size_t size, unsigned char** response, size_t* resp_size, void* userContextCallback);
 static const char* GetReasonString(IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason);

@@ -43,17 +43,16 @@
     <TargetHardwareDefinition>hardware.json</TargetHardwareDefinition>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="distance.c" />
     <ClCompile Include="epoll_timerfd_utilities.c" />
     <ClCompile Include="iot.c" />
     <ClCompile Include="lcd.c" />
     <ClCompile Include="leds.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="parson.c" />
+    <ClCompile Include="vl53l1x.c" />
     <UpToDateCheckInput Include="app_manifest.json" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="distance.h" />
     <ClInclude Include="epoll_timerfd_utilities.h" />
     <ClInclude Include="iot.h" />
     <ClInclude Include="lcd.h" />
@@ -62,6 +61,7 @@
     <ClInclude Include="mt3620.h" />
     <ClInclude Include="mt3620_rdb.h" />
     <ClInclude Include="parson.h" />
+    <ClInclude Include="vl53l1x.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hardware.json">
@@ -78,6 +78,7 @@
     <Link>
       <LibraryDependencies>applibs;pthread;gcc_s;c;azureiot</LibraryDependencies>
       <AdditionalOptions>-Wl,--no-undefined -nodefaultlibs %(AdditionalOptions)</AdditionalOptions>
+      <VerboseOutput Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</VerboseOutput>
     </Link>
   </ItemDefinitionGroup>
 </Project>

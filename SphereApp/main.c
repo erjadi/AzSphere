@@ -16,11 +16,14 @@
 #include "leds.h"
 #include <applibs/i2c.h>
 #include "lcd.h"
-#include "distance.h"
-
+#include "vl53l1x.h"
 
 // Azure IoT SDK
 #include "iot.h"
+
+// Distance Measurements VL53L1X
+static bool distanceflag = false;
+static int measureddistance = 0;
 
 // GPIO59 for Reset
 static int resetFd = -1;
@@ -189,9 +192,13 @@ int main(int argc, char* argv[])
 	// I2C Scratch
 
 	Log_Debug("AzSphere Application starting.\n");
-
 	InitLeds();
-	InitDistance();
+
+	vl53l1x_setTimeout(500000);
+	VL53L1X_init(true, 1);
+	VL53L1X_setDistanceMode(Long);
+	VL53L1X_setMeasurementTimingBudget(50000);
+
 	InitPeripheralsAndHandlers();
 
 	// Log in to IoT Hub
@@ -247,7 +254,16 @@ int main(int argc, char* argv[])
 			terminationRequired = true;
 		}
 
-		//if ((cycle % 25) == 0) IoTHubDeviceClient_LL_DoWork(getIoTHubClientHandle());
+		if ((cycle % 25) == 0) {
+			if (distanceflag) {
+				uint16_t result = VL53L1X_read(true);
+				if (result > 0)
+				{
+					//Log_Debug("%d\n", result);
+					measureddistance = result;
+				}
+			}
+		}
 	}
 
 	AllLedsOff();
@@ -259,7 +275,6 @@ int main(int argc, char* argv[])
 /// </summary>
 static void AzureTimerEventHandler(EventData* eventData)
 {
-	//Log_Debug("Distance %i\n", measureDistance());
 
 	bool isNetworkReady = false;
 	SetStatusLed(isIoTHubAuthenticated());
@@ -300,20 +315,46 @@ static void AzureTimerEventHandler(EventData* eventData)
 			TwinReportIntState("blueled", indexBlue);
 		}
 		else {
-			lcd_gotolc(1, 1);
-			time_t rawtime;
-			struct tm* timeinfo;
-			time(&rawtime);
-			timeinfo = localtime(&rawtime);
-			char timebuf[18];
-			sprintf(timebuf, "Connected %02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
-			lcd_print(timebuf);
-			lcd_gotolc(2, 1);
-			if (getVersion()[0] == '#') {
-				lcd_print("Debug Build");
+			if (!distanceflag)
+			{
+				lcd_gotolc(1, 1);
+				time_t rawtime;
+				struct tm* timeinfo;
+				time(&rawtime);
+				timeinfo = localtime(&rawtime);
+				char timebuf[18];
+				sprintf(timebuf, "Connected %02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+				lcd_print(timebuf);
+				lcd_gotolc(2, 1);
+				if (getVersion()[0] == '#') {
+					lcd_print("Debug Build");
+				}
+				else {
+					lcd_print("Build ID #VERSION_NUMBER");
+				}
 			}
-			else {
-				lcd_print("Build ID #VERSION_NUMBER");
+			else
+			{
+				lcd_gotolc(1, 1);
+				time_t rawtime;
+				struct tm* timeinfo;
+				time(&rawtime);
+				timeinfo = localtime(&rawtime);
+				char timebuf[18];
+				sprintf(timebuf, "Connected %02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+				lcd_print(timebuf);
+				lcd_gotolc(2, 1);
+				lcd_print("LIDAR Mode          ");
+				lcd_gotolc(3, 1);
+				char distnumber[20];
+				sprintf(distnumber, "%d              ", measureddistance);
+				lcd_print(distnumber);
+				lcd_gotolc(4, 1);
+				char distbar[20] = "                    ";
+				for (int i = 0; i * 100 < measureddistance; i++)
+					if (i < 20)
+						distbar[i] = '*';
+				lcd_print(distbar);
 			}
 		}
 	}
@@ -340,7 +381,7 @@ static int InitPeripheralsAndHandlers(void)
 	SetStatusLed(false);
 
 	azureIoTPollPeriodSeconds = AzureIoTDefaultPollPeriodSeconds;
-	struct timespec azureTelemetryPeriod = { azureIoTPollPeriodSeconds, 0 };
+	struct timespec azureTelemetryPeriod = { 0, 100000000L }; // 0.1 seconds
 	azureTimerFd =
 		CreateTimerFdAndAddToEpoll(epollFd, &azureTelemetryPeriod, &azureEventData, EPOLLIN);
 
@@ -440,3 +481,18 @@ void versionHandler(unsigned char* version) { // OTA Update
 			}
 }
 
+void setDistanceflag(bool flag) {
+	if (flag)
+	{
+		VL53L1X_startContinuous(50);
+		distanceflag = true;
+		TwinReportBoolState("distanceflag", true);
+		resetLCD();
+	}
+	else {
+		VL53L1X_stopContinuous();
+		distanceflag = false;
+		TwinReportBoolState("distanceflag", false);
+		resetLCD();
+	}
+}

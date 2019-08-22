@@ -34,7 +34,7 @@
     <ClCompile Include="lcd.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="distance.c">
+    <ClCompile Include="vl53l1x.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -63,7 +63,7 @@
     <ClInclude Include="main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="distance.h">
+    <ClInclude Include="vl53l1x.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

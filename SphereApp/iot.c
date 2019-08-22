@@ -100,10 +100,11 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 	if (desiredProperties == NULL) {
 		desiredProperties = rootObject;
 	}
-
+	
 	// Handle the Device Twin Desired Properties here.
 	setBlueLed((int)json_object_get_number(desiredProperties, "blueled"));
 	versionHandler(json_object_get_string(desiredProperties, "appversion"));
+	setDistanceflag(json_object_get_boolean(desiredProperties, "distanceflag"));
 
 cleanup:
 	// Release the allocated memory.
@@ -277,6 +278,36 @@ void TwinReportIntState(const char* propertyName, unsigned int propertyValue)
 	}
 }
 
+/// <summary>
+///     Creates and enqueues a report containing the name and value pair of a Device Twin reported
+///     property. The report is not sent immediately, but it is sent on the next invocation of
+///     IoTHubDeviceClient_LL_DoWork().
+/// </summary>
+/// <param name="propertyName">the IoT Hub Device Twin property name</param>
+/// <param name="propertyValue">the IoT Hub Device Twin property value</param>
+void TwinReportBoolState(const char* propertyName, bool propertyValue)
+{
+	if (iothubClientHandle == NULL) {
+		Log_Debug("ERROR: client not initialized\n");
+	}
+	else {
+		static char reportedPropertiesString[255] = { 0 };
+		int len = snprintf(reportedPropertiesString, 255, "{\"%s\":\%s\}", propertyName,
+			( propertyValue ? "true" : "false" ));
+		if (len < 0)
+			return;
+
+		if (IoTHubDeviceClient_LL_SendReportedState(
+			iothubClientHandle, (unsigned char*)reportedPropertiesString,
+			strlen(reportedPropertiesString), ReportStatusCallback, 0) != IOTHUB_CLIENT_OK) {
+			Log_Debug("ERROR: failed to set reported state for '%s'.\n", propertyName);
+		}
+		else {
+			Log_Debug("INFO: Reported state for '%s' to value %d.\n", propertyName,
+				propertyValue);
+		}
+	}
+}
 
 /// <summary>
 ///     Callback invoked when the Device Twin reported properties are accepted by IoT Hub.
