@@ -261,6 +261,9 @@ int main(int argc, char* argv[])
 				{
 					//Log_Debug("%d\n", result);
 					measureddistance = result;
+					char distancestring[10];
+					sprintf(distancestring, "%d", result);
+					SendTelemetry("LIDAR", distancestring);
 				}
 			}
 		}
