@@ -35,7 +35,7 @@ static void ReportStatusCallback(int result, void* context);
 static int DeviceMethodCallback(const char* method_name, const unsigned char* payload, size_t size, unsigned char** response, size_t* resp_size, void* userContextCallback);
 static const char* GetReasonString(IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason);
 static const char* getAzureSphereProvisioningResultString(AZURE_SPHERE_PROV_RETURN_VALUE provisioningResult);
-void SendTelemetry(const unsigned char* key, const unsigned char* value);
+void SendTelemetry(const unsigned char* key, uint16_t value);
 void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason, void* userContextCallback);
 IOTHUB_DEVICE_CLIENT_LL_HANDLE getIoTHubClientHandle(void);
 static IOTHUBMESSAGE_DISPOSITION_RESULT ReceiveMessageCallback(IOTHUB_MESSAGE_HANDLE message, void* user_context);

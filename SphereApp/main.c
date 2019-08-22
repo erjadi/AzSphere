@@ -259,11 +259,7 @@ int main(int argc, char* argv[])
 				uint16_t result = VL53L1X_read(true);
 				if (result > 0)
 				{
-					//Log_Debug("%d\n", result);
 					measureddistance = result;
-					char distancestring[10];
-					sprintf(distancestring, "%d", result);
-					SendTelemetry("LIDAR", distancestring);
 				}
 			}
 		}
@@ -294,7 +290,7 @@ static void AzureTimerEventHandler(EventData* eventData)
 			lcd_gotolc(2, 1);
 			lcd_print("Waiting for network");
 		}
-		Log_Debug("Waiting for network...");
+		Log_Debug("Waiting for network...\n");
 	}
 
 	if (!isIoTHubAuthenticated() && isNetworkReady) {
@@ -358,6 +354,7 @@ static void AzureTimerEventHandler(EventData* eventData)
 					if (i < 20)
 						distbar[i] = '*';
 				lcd_print(distbar);
+				SendTelemetry("LIDAR", measureddistance);
 			}
 		}
 	}

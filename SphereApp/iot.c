@@ -188,10 +188,10 @@ static void SendMessageCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void* 
 /// </summary>
 /// <param name="key">The telemetry item to update</param>
 /// <param name="value">new telemetry value</param>
-void SendTelemetry(const unsigned char* key, const unsigned char* value)
+void SendTelemetry(const unsigned char* key, uint16_t value)
 {
 	static char eventBuffer[100] = { 0 };
-	static const char* EventMsgTemplate = "{ \"%s\": %s }";
+	static const char* EventMsgTemplate = "{ \"%s\": %d }";
 	int len = snprintf(eventBuffer, sizeof(eventBuffer), EventMsgTemplate, key, value);
 	if (len < 0)
 		return;
